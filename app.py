@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import streamlit as st
+from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -133,9 +134,21 @@ def dark_fig(fig, height=420):
 # ─────────────────────────────────────────────────────────────────────────────
 # Data + model loading (cached)
 # ─────────────────────────────────────────────────────────────────────────────
+
+# Resolve CSV path relative to this file — works locally AND on Streamlit Cloud
+HERE     = Path(__file__).parent.resolve()
+CSV_PATH = HERE / "safestage_cleaned.csv"
+
 @st.cache_data(show_spinner="Loading SafeStage dataset…")
 def load_data():
-    return pd.read_csv("safestage_cleaned.csv")
+    if not CSV_PATH.exists():
+        st.error(
+            f"**Dataset not found.**\n\n"
+            f"Expected: `{CSV_PATH}`\n\n"
+            "Ensure `safestage_cleaned.csv` is in the same folder as `app.py`."
+        )
+        st.stop()
+    return pd.read_csv(CSV_PATH)
 
 @st.cache_resource(show_spinner="Training ML models…")
 def load_models(df):
